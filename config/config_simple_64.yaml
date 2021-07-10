@@ -1,0 +1,32 @@
+dataset:
+  num_classes: 2
+  max_height: 64
+  max_width: 64
+  augmentation: False
+  train_dir: './dataset/dataset_all_6/Dataset/train.csv'
+  val_dir: './dataset/dataset_all_6/Dataset/val.csv'
+  test_dir: './dataset/dataset_all_6/Dataset/test.csv'
+  label_file: './dataset/dataset_all_6/labels.json'
+  subset: False
+dataloader:
+  batch_size: 64
+  num_workers: 8
+model:
+  model_name: 'cnn_simple_64'
+  cnn:
+    name: cnn_simple_64
+    version: cnn_simple_64
+    pretrained: True
+    feature_extract: False
+train:
+  seed: 0
+  clip: 1
+  n_epochs: 30
+  root_ckpt_dir: './checkpoint'
+  ckpt_dir: './checkpoint_all_6_no_feature_extract_simple_64_randomgauss'
+optimizer:
+  start_lr: 1.0e-3
+  end_lr: 1.0e-11
+  step_reduce_lr: 5
+  weight_decay: 1.0e-5
+  dropout: 0.8

@@ -1,0 +1,12 @@
+dataset:
+  num_classes: 2
+  max_height: 224
+  max_width: 224
+  augmentation: False
+  test_dir: './dataset/dataset_test/Dataset/test.csv'
+  label_file: './dataset/dataset_test/labels.json'
+  subset: False
+dataloader:
+  batch_size: 64
+  num_workers: 8
+
