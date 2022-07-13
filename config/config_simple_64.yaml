@@ -1,13 +1,6 @@
 dataset:
-  num_classes: 2
   max_height: 64
   max_width: 64
-  augmentation: False
-  train_dir: './dataset/dataset_all_6/Dataset/train.csv'
-  val_dir: './dataset/dataset_all_6/Dataset/val.csv'
-  test_dir: './dataset/dataset_all_6/Dataset/test.csv'
-  label_file: './dataset/dataset_all_6/labels.json'
-  subset: False
 dataloader:
   batch_size: 64
   num_workers: 8

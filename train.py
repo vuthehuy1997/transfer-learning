@@ -1,7 +1,6 @@
 import yaml
 import argparse
 from collections import Counter
-from sklearn.model_selection import train_test_split
 import torch
 from torch import optim
 import torch.nn as nn
@@ -13,11 +12,10 @@ import os
 import shutil
 from PIL import Image, ImageFilter
 
-from dataset import MaskDetectionDataset
-
+from data.dataset import TFDataset
 from utils import set_seed, set_determinism, count_parameters
 from trainer import Trainer
-
+from model.network.cnn import CNNModel
 
 device = 'cuda:1' if torch.cuda.is_available() else 'cpu'
 print('Device: {}'.format(device))
@@ -43,9 +41,12 @@ class RandomGaussBlur(object):
 
 
 def train(args):
-    config_path = args.config
-    config = yaml.load(open(config_path, 'r'), Loader=yaml.Loader)
+    config_model = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
+    config_data = yaml.load(open(args.data, 'r'), Loader=yaml.Loader)
 
+    config = {**config_model, **config_data}
+
+    print(config)
     # Image transforms
     img_transform = transforms.Compose([
             # RandomGaussBlur(radius=[-5.0, 5.0]),
@@ -56,14 +57,16 @@ def train(args):
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
 
-    train_dataset = MaskDetectionDataset(
-        csv_file = config['dataset']['train_dir'],
-        label_file = config['dataset']['label_file'],
+    train_dataset = TFDataset(
+        label_dir = config['data']['train_dir'],
+        label_file = config['data']['train_label'],
+        label_name = config['data']['label_name'],
         img_transform=img_transform)
 
-    val_dataset = MaskDetectionDataset(
-        csv_file = config['dataset']['val_dir'],
-        label_file = config['dataset']['label_file'],
+    val_dataset = TFDataset(
+        label_dir = config['data']['val_dir'],
+        label_file = config['data']['val_label'],
+        label_name = config['data']['label_name'],
         img_transform=img_transform)
 
     set_seed(config['train']['seed'])
@@ -91,26 +94,20 @@ def train(args):
     print('infor: ', train_dataset.get_infor())
     infor_log.write(train_dataset.get_infor())
 
-    shutil.copyfile(config_path, os.path.join(ckpt_dir, 'config.yaml'))
+    with open(os.path.join(ckpt_dir, 'config.yaml'), 'w') as outfile:
+        yaml.dump(config, outfile, default_flow_style=False)
 
     # Network
-    if config['model']['name'] == 'resnet18':
-        from model.cnn_resnet18 import CNNModel
-    elif config['model']['name'] == 'mobilenet_v2':
-        from model.cnn_mobilenet_v2 import CNNModel
-    elif config['model']['name'] == 'cnn_simple_32':
-        from model.cnn_simple_32 import CNNModel
-    elif config['model']['name'] == 'cnn_simple_64':
-        from model.cnn_simple_64 import CNNModel
-
     model = CNNModel(
-        feature_extract=config['model']['cnn']['feature_extract'],
-        number_class=config['dataset']['num_classes'], drop_p=config['optimizer']['dropout']).to(device)
+        fe_name=config['model']['cnn']['module'], version=config['model']['cnn']['version'],
+        feature_extract=config['model']['cnn']['feature_extract'], pretrained=config['model']['cnn']['pretrained'],
+        number_class=config['data']['num_classes'], drop_p=config['regularization']['dropout']).to(device)
     count_parameters(model)
 
     # Loss
     set_seed(config['train']['seed'])
-    criterion = nn.CrossEntropyLoss(weight=class_weights).to(device)
+    # criterion = nn.CrossEntropyLoss(weight=class_weights).to(device)
+    criterion = nn.CrossEntropyLoss().to(device)
 
     # Optimizer & Scheduler
     set_seed(config['train']['seed'])
@@ -124,7 +121,7 @@ def train(args):
     #      lr=config['optimizer']['start_lr'],
     #      momentum=0.9)
     set_seed(config['train']['seed'])
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=config['optimizer']['step_reduce_lr'], gamma=0.1)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=config['scheduler']['step_reduce_lr'], gamma=0.1)
 
     # Train
     set_seed(config['train']['seed'])
@@ -152,6 +149,7 @@ def train(args):
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str)
+    parser.add_argument('--data', type=str)
     parser.add_argument('--resume', type=str, help='path of pretrained')
     args = parser.parse_args()
     train(args)

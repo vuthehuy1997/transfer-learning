@@ -1,0 +1,11 @@
+data:
+  num_classes: 8
+  augmentation: False
+  train_dir: './dataset/dataset_8/train_val/images'
+  train_label: 'train.csv'
+  val_dir: './dataset/dataset_8/train_val/images'
+  val_label: 'val.csv'
+  test_dir: './dataset/dataset_8/public_test_review/'
+  test_label: 'public_test.csv'
+  label_name: 'data/labels.json'
+  subset: False

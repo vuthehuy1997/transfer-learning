@@ -1,5 +1,6 @@
 import os
 import time
+import yaml
 from tqdm import tqdm
 import argparse
 import pandas as pd
@@ -10,21 +11,26 @@ from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 from PIL import Image
 import subprocess
-import ffmpeg
 import datetime
-from dataset import MaskDetectionDataset
 from torch.utils.data import DataLoader
-from model.cnn import CNNModel
 import math
 from utils import AverageMeter
+
+from data.dataset import TFDataset
+from model.network.cnn import CNNModel
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print('Device: {}'.format(device))
 
-def evaluate(weight):
+def evaluate(args):
 
-    ckpt = torch.load(weight, map_location=device)
-    config = ckpt['config']
+    ckpt = torch.load(args.ckpt, map_location=device)
+    config_model = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
+    config_data = yaml.load(open(args.data, 'r'), Loader=yaml.Loader)
+
+    config = {**config_model, **config_data}
+
+    print(config)
 
     # Image transforms
     img_transform = transforms.Compose([
@@ -33,9 +39,10 @@ def evaluate(weight):
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
-    test_dataset = MaskDetectionDataset(
-        csv_file = config['dataset']['test_dir'],
-        label_file = config['dataset']['label_file'],
+    test_dataset = TFDataset(
+        label_dir = config['data']['test_dir'],
+        label_file = config['data']['test_label'],
+        label_name = config['data']['label_name'],
         img_transform=img_transform)
     test_loader = DataLoader(
         dataset=test_dataset,
@@ -51,7 +58,9 @@ def evaluate(weight):
 
     # Network
     model = CNNModel(
-        number_class=config['dataset']['num_classes']).to(device)
+        fe_name=config['model']['cnn']['module'], version=config['model']['cnn']['version'],
+        feature_extract=config['model']['cnn']['feature_extract'], pretrained=config['model']['cnn']['pretrained'],
+        number_class=config['data']['num_classes'], drop_p=config['regularization']['dropout']).to(device)
     model.load_state_dict(ckpt['model'])
 
     # Evaluate
@@ -75,8 +84,9 @@ def evaluate(weight):
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str)
-    parser.add_argument('--weight')
+    parser.add_argument('--data', type=str)
+    parser.add_argument('--ckpt')
     args = parser.parse_args()
     start_time = time.time()
-    evaluate(args.weight)
+    evaluate(args)
     print(time.time()-start_time)

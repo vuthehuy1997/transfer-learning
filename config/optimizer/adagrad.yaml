@@ -1,0 +1,6 @@
+optimizer:
+  name: ADAGRAD
+  lr: 1.0e-3
+  lr_decay: 0
+  weight_decay: 0
+  eps: 1.0e-10

@@ -13,46 +13,50 @@ import pandas as pd
 from PIL import Image
 
 
-class MaskDetectionDataset(Dataset):
+class TFDataset(Dataset):
     """
-    MaskDetection image  ...
+    TF image  ...
     """
-    def __init__(self, csv_file, label_file, img_transform):
+    def __init__(self, label_dir, label_file , label_name=None, img_transform=None):
         """
         Args:
-            csv_file: file contains data path and label
-            label_file: file mapping label
+            label_dir: data path
+            label_file: file contains data path and label
+            label_name: file mapping label
             img_transform: img transform
         """
         data_labels = []
-        f = open(label_file,)
+        f = open(label_name,)
         labels = json.load(f)
         print('label: ', labels)
         for label in labels:
             data_labels.append(labels[label])
         self.data_labels = data_labels
 
-        df = pd.read_csv(csv_file)
+        df = pd.read_csv(os.path.join(label_dir, label_file))
+        self.dir = label_dir
         self.paths = df.iloc[:, 0]
         self.labels = df.iloc[:, 1]
+        self.labels = list(map(str, self.labels))
         self.img_transform = img_transform
 
     def __len__(self):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        img_path = self.paths[idx]
+        img_path = os.path.join(self.dir, self.paths[idx])
         # print('img_path: ', img_path)
         image = Image.open(img_path)
         # print('image: ', image)
-        image = self.img_transform(image)
+        if self.img_transform != None:
+            image = self.img_transform(image)
         
-        label = self.label2int(self.labels[idx])
+        label = self.label2int(str(self.labels[idx]))
         return image, label
 
     def get_classweight(self):
         counter = Counter(self.labels)
-        class_weights = torch.Tensor([(1.0 / counter[label]) for label in self.data_labels])
+        class_weights = torch.Tensor([(1.0 / max(1,counter[label])) for label in self.data_labels])
         return class_weights
 
     def get_infor(self):
@@ -76,7 +80,7 @@ if __name__ == '__main__':
         transforms.ToTensor()
     ])
 
-    dataset = MaskDetectionDataset('./Dataset/train.csv', './Dataset/labels.json', img_transform=data_transforms)
+    dataset = TFDataset('./Dataset/train.csv', './Dataset/labels.json', img_transform=data_transforms)
     print(len(dataset))
 
     loader = DataLoader(dataset, min(8, len(dataset)), False)

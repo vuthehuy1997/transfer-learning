@@ -1,0 +1,5 @@
+optimizer:
+  name: SGD
+  lr: 1.0e-3
+  momentum: 0.9
+  weight_decay: 1.0e-6

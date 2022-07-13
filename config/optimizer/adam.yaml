@@ -1,0 +1,7 @@
+optimizer:
+  name: Adam
+  lr: 1.0e-3
+  beta1: 0.9
+  beta2: 0.999
+  eps: 1.0e-8
+  weight_decay: 1.0e-6

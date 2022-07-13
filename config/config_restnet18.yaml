@@ -1,13 +1,6 @@
 dataset:
-  num_classes: 2
   max_height: 224
   max_width: 224
-  augmentation: False
-  train_dir: './dataset/dataset_all_6/Dataset/train_augmentation_gauss_easy.csv'
-  val_dir: './dataset/dataset_all_6/Dataset/val_augmentation_gauss_easy.csv'
-  test_dir: './dataset/dataset_all_6/Dataset/test_augmentation_gauss_easy.csv'
-  label_file: './dataset/dataset_all_6/labels.json'
-  subset: False
 dataloader:
   batch_size: 64
   num_workers: 8
@@ -15,18 +8,24 @@ model:
   model_name: 'resnet18'
   cnn:
     name: resnet18
+    module: ResnetFE
     version: resnet18
     pretrained: True
     feature_extract: False
 train:
   seed: 0
   clip: 1
-  n_epochs: 10
+  n_epochs: 100
   root_ckpt_dir: './checkpoint'
-  ckpt_dir: './checkpoint_all_6_augmentation_no_feature_extract_gauss_easy'
+  ckpt_dir: './checkpoint_version'
 optimizer:
-  start_lr: 1.0e-3
+  start_lr: 3.0e-4
   end_lr: 1.0e-11
-  step_reduce_lr: 5
-  weight_decay: 1.0e-6
+
+  # weight_decay: 1.0e-6
+  # dropout: 0.5
+  weight_decay: 0
+regularization:
   dropout: 0.5
+scheduler:
+  step_reduce_lr: 5
