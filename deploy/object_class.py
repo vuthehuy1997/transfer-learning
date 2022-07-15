@@ -10,22 +10,15 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 import numpy as np
 from PIL import Image
-import cv2
+# import cv2
 import datetime
+from model.network.cnn import CNNModel
 from torch.utils.data import DataLoader
 import torch.backends.cudnn as cudnn
-
-# from model.cnn_simple import CNNModel
-# from model.cnn import CNNModel
-
-from config_api import gpu_mask_detection
-if gpu_mask_detection == -1:
-    DEVICE = 'cpu'
-else:
-    DEVICE = 'cuda:' + str(gpu_mask_detection)
+from data.augment import get_img_transform
 
 class ObjectClassName:
-    def __init__(self, weight = './checkpoint/checkpoint_all_6_no_feature_extract_simple_randomgauss/last.pt'):
+    def __init__(self, weight = './last.pt', DEVICE = 'cuda:0'):
         # torch.set_grad_enabled(False)
         # net and model
         self.device = torch.device(DEVICE)
@@ -34,17 +27,11 @@ class ObjectClassName:
         config = ckpt['config']
 
         # Network
-        if config['model']['name'] == 'resnet18':
-            from model.cnn_resnet18 import CNNModel
-        elif config['model']['name'] == 'mobilenet_v2':
-            from model.cnn_mobilenet_v2 import CNNModel
-        elif config['model']['name'] == 'cnn_simple_32':
-            from model.cnn_simple_32 import CNNModel
-        elif config['model']['name'] == 'cnn_simple_64':
-            from model.cnn_simple_64 import CNNModel
-
         self.net = CNNModel(
-            number_class=config['dataset']['num_classes']).to(self.device)
+            fe_name=config['model']['cnn']['module'], version=config['model']['cnn']['version'],
+            feature_extract=config['model']['cnn']['feature_extract'], pretrained=config['model']['cnn']['pretrained'],
+            number_class=config['data']['num_classes'], drop_p=config['regularization']['dropout']).to(self.device)
+
         self.net.load_state_dict(ckpt['model'])
         print('Finished loading model!')
         # print(net)
@@ -53,14 +40,12 @@ class ObjectClassName:
         self.net = self.net.to(self.device)
         self.net.eval()
         self.img_transform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize([config['dataset']['max_height'], config['dataset']['max_height']]),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            # transforms.ToPILImage(),
+            get_img_transform(config['model']['dataset'], False)
         ])
 
     def predict(self, img):
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = self.img_transform(img)
         img.unsqueeze_(dim=0)
         img = Variable(img)
@@ -73,12 +58,13 @@ class ObjectClassName:
             # print('predicted: ', predicted.item())
             # print('predicted: ', outputs[0][predicted].item())
         # return predicted.item(), outputs[0][predicted].item()
-        return outputs[0][0].item()
+        # return outputs[0][0].item()
+        return predicted.item()
 
     def predict_batch(self, imgs):
         tensor_imgs = []
         for img in imgs:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             img = self.img_transform(img)
             tensor_imgs.append(img)
         tensor_imgs = torch.stack(tensor_imgs)
@@ -93,4 +79,5 @@ class ObjectClassName:
             print('predicted: ', list(outputs[:, 0]))
             # print('predicted: ', predicted.item())
             # print('predicted: ', outputs[0][predicted].item())
-        return [output[0].item() for output in outputs]
+        # return [output[0].item() for output in outputs]
+        return [i.item() for i in predicted]

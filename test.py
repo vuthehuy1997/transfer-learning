@@ -18,27 +18,30 @@ from utils import AverageMeter
 
 from data.dataset import TFDataset
 from model.network.cnn import CNNModel
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-print('Device: {}'.format(device))
+from data.augment import get_img_transform
+from config.config import get_config
 
 def evaluate(args):
+    config = get_config()
+    print(config)
+
+    device = config['device'] if torch.cuda.is_available() else 'cpu'
+    print('Device: {}'.format(device))
+
 
     ckpt = torch.load(args.ckpt, map_location=device)
-    config_model = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
-    config_data = yaml.load(open(args.data, 'r'), Loader=yaml.Loader)
+    config = ckpt['config']
 
-    config = {**config_model, **config_data}
+    config_data = yaml.load(open(args.data, 'r'), Loader=yaml.Loader)
+    config.update(config_data)
 
     print(config)
 
+    
+
     # Image transforms
-    img_transform = transforms.Compose([
-        # transforms.ToPILImage(),
-        transforms.Resize([config['dataset']['max_height'], config['dataset']['max_width']]),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
+    img_transform = get_img_transform(config['model']['dataset'], False)
+
     test_dataset = TFDataset(
         label_dir = config['data']['test_dir'],
         label_file = config['data']['test_label'],
@@ -83,7 +86,6 @@ def evaluate(args):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str)
     parser.add_argument('--data', type=str)
     parser.add_argument('--ckpt')
     args = parser.parse_args()

@@ -21,10 +21,8 @@ train:
 optimizer:
   start_lr: 3.0e-4
   end_lr: 1.0e-11
-
-  # weight_decay: 1.0e-6
-  # dropout: 0.5
   weight_decay: 0
+loss: CE
 regularization:
   dropout: 0.5
 scheduler:

@@ -1,1 +1,3 @@
-loss: CE
+loss: 
+  name: CE
+  class_weight: False

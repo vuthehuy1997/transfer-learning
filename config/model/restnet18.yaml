@@ -1,0 +1,11 @@
+model:
+  model_name: 'resnet18'
+  cnn:
+    name: resnet18
+    module: ResnetFE
+    version: resnet18
+    pretrained: True
+    feature_extract: False
+  dataset:
+    max_height: 224
+    max_width: 224

@@ -17,45 +17,28 @@ from utils import set_seed, set_determinism, count_parameters
 from trainer import Trainer
 from model.network.cnn import CNNModel
 
-device = 'cuda:1' if torch.cuda.is_available() else 'cpu'
-print('Device: {}'.format(device))
+from config.config import get_config
+from model.loss.loss import get_loss_from_config
+from model.optimizer.optimizer import get_optimizer_from_config
+from data.augment import get_img_transform
 
-class RandomGaussBlur(object):
-    """Random GaussBlurring on image by radius parameter.
-    Args:
-        radius (list, tuple): radius range for selecting from; you'd better set it < 2
-    """
-    def __init__(self, radius=None):
-        if radius is not None:
-            assert isinstance(radius, (tuple, list)) and len(radius) == 2, \
-                "radius should be a list or tuple and it must be of length 2."
-            self.radius = random.uniform(radius[0], radius[1])
-        else:
-            self.radius = 0.0
-
-    def __call__(self, img):
-        return img.filter(ImageFilter.GaussianBlur(radius=self.radius))
-
-    def __repr__(self):
-        return self.__class__.__name__ + '(Gaussian Blur radius={0})'.format(self.radius)
 
 
 def train(args):
-    config_model = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
-    config_data = yaml.load(open(args.data, 'r'), Loader=yaml.Loader)
+    # config_model = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
+    # config_data = yaml.load(open(args.data, 'r'), Loader=yaml.Loader)
 
-    config = {**config_model, **config_data}
-
+    # config = {**config_model, **config_data}
+    config = get_config()
     print(config)
+
+
+    device = config['device'] if torch.cuda.is_available() else 'cpu'
+    print('Device: {}'.format(device))
+
+
     # Image transforms
-    img_transform = transforms.Compose([
-            # RandomGaussBlur(radius=[-5.0, 5.0]),
-            transforms.Resize([config['dataset']['max_height'], config['dataset']['max_width']]),
-            transforms.ColorJitter(brightness=0.5, contrast=0.2, saturation=0, hue=0),
-            transforms.ToTensor(),
-            # AddGaussianNoise(0.0, 0.05),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
+    img_transform = get_img_transform(config['model']['dataset'], config['aug'])
 
     train_dataset = TFDataset(
         label_dir = config['data']['train_dir'],
@@ -106,20 +89,12 @@ def train(args):
 
     # Loss
     set_seed(config['train']['seed'])
-    # criterion = nn.CrossEntropyLoss(weight=class_weights).to(device)
-    criterion = nn.CrossEntropyLoss().to(device)
+    criterion = get_loss_from_config(config['loss'],weight=class_weights).to(device)
 
     # Optimizer & Scheduler
     set_seed(config['train']['seed'])
-    optimizer = optim.Adam(
-        lr=config['optimizer']['start_lr'],
-        weight_decay=config['optimizer']['weight_decay'],
-        params=filter(lambda p: p.requires_grad, model.parameters())
-        )
-    # optimizer = optim.SGD(
-    #      params=filter(lambda p: p.requires_grad, model.parameters()),
-    #      lr=config['optimizer']['start_lr'],
-    #      momentum=0.9)
+    optimizer = get_optimizer_from_config(config['optimizer'],filter(lambda p: p.requires_grad, model.parameters()))
+    
     set_seed(config['train']['seed'])
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=config['scheduler']['step_reduce_lr'], gamma=0.1)
 

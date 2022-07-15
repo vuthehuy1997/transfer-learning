@@ -1,1 +1,0 @@
-gpu_object_class = 1
