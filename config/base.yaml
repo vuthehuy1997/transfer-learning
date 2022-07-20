@@ -6,7 +6,7 @@ train:
   clip: 1
   n_epochs: 100
   root_ckpt_dir: './checkpoint'
-  ckpt_dir: './checkpoint_resnet50'
+  ckpt_dir: './checkpoint_resnet50_regression'
 regularization:
   dropout: 0.5
 scheduler:

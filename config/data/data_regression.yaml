@@ -1,0 +1,11 @@
+data:
+  num_classes: 1
+  augmentation: False
+  train_dir: './dataset/dataset_360/train_val/images'
+  train_label: 'train.csv'
+  val_dir: './dataset/dataset_360/train_val/images'
+  val_label: 'val.csv'
+  test_dir: './dataset/dataset_360/public_test_review/'
+  test_label: 'public_test.csv'
+  label_name: 'data/labels_360.json'
+  subset: False

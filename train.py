@@ -12,17 +12,20 @@ import os
 import shutil
 from PIL import Image, ImageFilter
 
-from data.dataset import TFDataset
+
 from utils import set_seed, set_determinism, count_parameters
 from trainer import Trainer
 from model.network.cnn import CNNModel
 
-from config.config import get_config
+from config.config import get_config, classification
 from model.loss.loss import get_loss_from_config
 from model.optimizer.optimizer import get_optimizer_from_config
 from data.augment import get_img_transform
 
-
+if classification:
+    from data.dataset import TFDataset
+else:
+    from data.dataset_regression import TFDataset
 
 def train(args):
     # config_model = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
@@ -89,7 +92,7 @@ def train(args):
 
     # Loss
     set_seed(config['train']['seed'])
-    criterion = get_loss_from_config(config['loss'],weight=class_weights).to(device)
+    criterion = get_loss_from_config(config['loss'],class_weight=class_weights).to(device)
 
     # Optimizer & Scheduler
     set_seed(config['train']['seed'])

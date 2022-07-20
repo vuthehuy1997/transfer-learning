@@ -1,10 +1,18 @@
 import yaml
 
+# base = 'config/base.yaml'
+# data = 'config/data/data.yaml'
+# model = 'config/model/restnet50.yaml'
+# loss = 'config/loss/ce.yaml'
+# optimizer = 'config/optimizer/adam.yaml'
+classification = True
+
 base = 'config/base.yaml'
-data = 'config/data/data.yaml'
-model = 'config/model/restnet18.yaml'
-loss = 'config/loss/ce.yaml'
+data = 'config/data/data_regression.yaml'
+model = 'config/model/restnet50.yaml'
+loss = 'config/loss/mse.yaml'
 optimizer = 'config/optimizer/adam.yaml'
+classification = False
 
 def get_config():
     config = yaml.load(open(base, 'r'), Loader=yaml.Loader)

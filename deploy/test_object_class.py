@@ -9,7 +9,7 @@ from PIL import Image
 # import cv2
 import pandas as pd
 import numpy as np
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
 
 import torch
 
@@ -66,12 +66,18 @@ def evaluate(weight, file_dir, csv_file, out_dir):
         # exit()
 
     #---------------eval
+    print('Number image: ', len(int_labels))
     cm = confusion_matrix(int_labels, int_predicts)
     print('cm: ', cm)
-    tn, fp, fn, tp = cm.ravel()
     
-    acc = (tp+tn)/(tp+tn+fp+fn)
+    acc = accuracy_score(int_labels, int_predicts)
     print('acc: ', acc)
+
+    precision = precision_score(int_labels, int_predicts, average='micro')
+    print('precision: ', precision)
+
+    recall = recall_score(int_labels, int_predicts, average='micro')
+    print('recall: ', recall)
 
 
     #---------------to file
@@ -81,7 +87,9 @@ def evaluate(weight, file_dir, csv_file, out_dir):
 
     log = open(join(out_dir, 'result.txt'), 'wt')
     log.write(f'acc: {acc:.4f}\n')
-    log.write(f'confusion matrix:\n {tn}\t {fp}\n {fn}\t {tp}\n')
+    log.write(f'precision:\n {precision}\n')
+    log.write(f'recall:\n {recall}\n')
+    log.write(f'confusion matrix:\n {cm}\n')
     # exit()
     
     # os.path.splitext(file_name)[0] + '_augmentation.jpg')
