@@ -1,0 +1,9 @@
+base: 'config/base.yaml'
+data: 'config/data/data.yaml'
+model: 'config/model/restnet50.yaml'
+loss: 'config/loss/ce.yaml'
+optimizer: 'config/optimizer/adam.yaml'
+
+classification: True
+aug: True
+device: cuda:1

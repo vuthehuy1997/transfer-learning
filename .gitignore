@@ -8,3 +8,5 @@ Tensorboard/*
 checkpoint/*
 test_result/*
 tmps/*
+weights/*
+pycuda/*

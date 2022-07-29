@@ -9,6 +9,8 @@ RUN apt update && apt install -y zip htop screen libgl1-mesa-glx
 # Install python dependencies
 COPY requirements.txt .
 RUN python -m pip install --upgrade pip
+RUN pip install nvidia-pyindex 
+Run pip install nvidia-tensorrt
 RUN pip install --no-cache -r requirements.txt albumentations wandb gsutil notebook \
     # torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
     torch==1.7.1+cu101 torchvision==0.8.2+cu101 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html

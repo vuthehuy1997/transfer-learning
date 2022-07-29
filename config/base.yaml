@@ -11,5 +11,4 @@ regularization:
   dropout: 0.5
 scheduler:
   step_reduce_lr: 5
-aug: True
-device: cuda:1
+

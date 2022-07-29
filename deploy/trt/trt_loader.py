@@ -36,15 +36,13 @@ def allocate_buffers(engine):
     # print(max_batch_size)
     for binding in engine:
         binding_shape = engine.get_binding_shape(binding)
-        # print(binding_shape)
+        print(binding_shape)
         #Fix -1 dimension for proper memory allocation for batch_size > 1
         if engine.binding_is_input(binding):
             # Input Encoder
             if binding == 'input':
                 if binding_shape[0] == -1:
                     binding_shape = (1,) + binding_shape[1:]
-                if binding_shape[-1] == -1:
-                    binding_shape = binding_shape[:-1] + (768,) 
                 print(binding, binding_shape, max_batch_size)
                 size = trt.volume(binding_shape) * max_batch_size
                 dtype = trt.nptype(engine.get_binding_dtype(binding))
@@ -54,10 +52,8 @@ def allocate_buffers(engine):
             # Output Encoder
             if binding == 'output':
                 if binding_shape[0] == -1:
-                    binding_shape = (384,) + binding_shape[1:] # feature_width
-                if binding_shape[1] == -1:
-                    binding_shape = binding_shape[:1] + (1,) + binding_shape[2:] # Batch size
-                # print(binding, binding_shape, max_batch_size)
+                    binding_shape = (1,) + binding_shape[1:]  # Batch size
+                print(binding, binding_shape, max_batch_size)
                 size = trt.volume(binding_shape) * max_batch_size
                 dtype = trt.nptype(engine.get_binding_dtype(binding))
             else:
@@ -114,7 +110,7 @@ class TrtModel(object):
         # print('Allocate')
         self.inputs, self.outputs, self.bindings, self.stream, self.input_shapes, self.out_shapes, self.out_names, self.max_batch_size = allocate_buffers(
             self.engine)
-        print(self.input_shapes, self.bindings, self.out_shapes, self.out_names)
+        print('TrtModel: ', self.input_shapes, self.bindings, self.out_shapes, self.out_names)
         # print('Build context')
         self.context = self.engine.create_execution_context()
         # self.context.active_optimization_profile = 0
@@ -130,6 +126,7 @@ class TrtCNN(TrtModel):
 
         input = np.asarray(input)
         batch_size = input.shape[0]
+        out_shape = (batch_size,) + self.out_shapes[0][1:]
         allocate_place = np.prod(input.shape)
         # print('allocate_place', input.shape)
         self.inputs[0].host[:allocate_place] = input.flatten(order='C').astype(np.float32)
@@ -138,4 +135,4 @@ class TrtCNN(TrtModel):
         output = do_inference(
             self.context, bindings=self.bindings,
             inputs=self.inputs, outputs=self.outputs, stream=self.stream)
-        return output
+        return output[0][:np.prod(out_shape)].reshape(out_shape)

@@ -17,24 +17,21 @@ from utils import set_seed, set_determinism, count_parameters
 from trainer import Trainer
 from model.network.cnn import CNNModel
 
-from config.config import get_config, classification
+from config.config import get_config
 from model.loss.loss import get_loss_from_config
 from model.optimizer.optimizer import get_optimizer_from_config
 from data.augment import get_img_transform
 
-if classification:
-    from data.dataset import TFDataset
-else:
-    from data.dataset_regression import TFDataset
+
 
 def train(args):
-    # config_model = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
-    # config_data = yaml.load(open(args.data, 'r'), Loader=yaml.Loader)
-
-    # config = {**config_model, **config_data}
-    config = get_config()
+    config = get_config(args.config)
     print(config)
 
+    if config['classification']:
+        from data.dataset import TFDataset
+    else:
+        from data.dataset_regression import TFDataset
 
     device = config['device'] if torch.cuda.is_available() else 'cpu'
     print('Device: {}'.format(device))
@@ -127,7 +124,6 @@ def train(args):
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str)
-    parser.add_argument('--data', type=str)
     parser.add_argument('--resume', type=str, help='path of pretrained')
     args = parser.parse_args()
     train(args)

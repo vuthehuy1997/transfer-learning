@@ -1,0 +1,17 @@
+data:
+  label_name: data/labels.json
+  num_classes: 8
+model:
+  cnn:
+    feature_extract: false
+    module: ResnetFE
+    name: resnet18
+    pretrained: true
+    version: resnet18
+  dataset:
+    max_height: 224
+    max_width: 224
+  model_name: resnet18
+weight: weights/last.trt
+device: cuda:0
+

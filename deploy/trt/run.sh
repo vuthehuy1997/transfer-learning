@@ -1,4 +1,10 @@
 python pytorch_model.py
+###
+# git clone --recursive --branch v2020.1 https://github.com/inducer/pycuda.git
+# cd pycuda
+# python configure.py --cuda-root=/usr/local/cuda-10.2
+# pip install -e .
+###
 
 /usr/src/tensorrt/bin/trtexec --explicitBatch \
                                 --onnx=resnet50.onnx \

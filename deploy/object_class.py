@@ -18,19 +18,16 @@ import torch.backends.cudnn as cudnn
 from data.augment import get_img_transform
 
 class ObjectClassName:
-    def __init__(self, weight = './last.pt', DEVICE = 'cuda:0'):
+    def __init__(self, config):
         # torch.set_grad_enabled(False)
         # net and model
-        self.device = torch.device(DEVICE)
+        self.device = torch.device(config['device'])
 
-        ckpt = torch.load(weight, map_location=self.device)
-        config = ckpt['config']
-
+        ckpt = torch.load(config['weight'], map_location=self.device)
         # Network
         self.net = CNNModel(
             fe_name=config['model']['cnn']['module'], version=config['model']['cnn']['version'],
-            feature_extract=config['model']['cnn']['feature_extract'], pretrained=config['model']['cnn']['pretrained'],
-            number_class=config['data']['num_classes'], drop_p=config['regularization']['dropout']).to(self.device)
+            number_class=config['data']['num_classes']).to(self.device)
 
         self.net.load_state_dict(ckpt['model'])
         print('Finished loading model!')

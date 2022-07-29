@@ -5,6 +5,7 @@ from shutil import copyfile
 import time
 import argparse
 import json
+import yaml
 from PIL import Image
 # import cv2
 import pandas as pd
@@ -13,27 +14,33 @@ from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, r
 
 import torch
 
-from object_class import ObjectClassName
+def evaluate(config_file, file_dir, csv_file, out_dir):
+    config = yaml.load(open(config_file, 'r'), Loader=yaml.Loader)
 
-label_file = 'data/labels.json'
+    print(config['weight'])
+    if config['weight'].endswith('.pt'): # Pytorch model
+        from object_class import ObjectClassName
+        model = ObjectClassName(config)
+    elif config['weight'].endswith('.trt'): # Tensorrt model
+        from deploy.trt.object_class_trt import ObjectClassName
+        model = ObjectClassName(config)
 
-def evaluate(weight, file_dir, csv_file, out_dir):
-    model = ObjectClassName(weight)
+    
     threshold = 0.5
 
     #---------------------get output folder
     if not exists(out_dir):
         mkdir(out_dir)
-    print('out: ', out_dir)
+    # print('out: ', out_dir)
 
     #-----------------------read label json
     data_labels = []
-    f = open(label_file,)
+    f = open(config['data']['label_name'],)
     json_labels = json.load(f)
-    print('json_labels: ', json_labels)
+    # print('json_labels: ', json_labels)
     for json_label in json_labels:
         data_labels.append(json_labels[json_label])
-    print('data_labels: ', data_labels)
+    # print('data_labels: ', data_labels)
 
     #-----------------------read data test
     df = pd.read_csv(csv_file)
@@ -41,7 +48,7 @@ def evaluate(weight, file_dir, csv_file, out_dir):
     paths = [os.path.join(file_dir, path) for path in paths]
     labels = df.iloc[:, 1]
     int_labels = [data_labels.index(str(x)) for x in labels]
-    print('int_labels: ', int_labels)
+    # print('int_labels: ', int_labels)
     # exit()
     int_predicts = []
 
@@ -50,13 +57,13 @@ def evaluate(weight, file_dir, csv_file, out_dir):
         # face = cv2.imread(path)
         image = Image.open(path)
         predict =  model.predict(image)
-        print('predict: ', predict)
+        # print('predict: ', predict)
         int_predicts.append(predict)
     #---------------save wrong image
     for path, label, predict in zip(list(paths), list(int_labels), int_predicts):
-        print('path:', path)
-        print('label:', label)
-        print('predict:', predict)
+        # print('path:', path)
+        # print('label:', label)
+        # print('predict:', predict)
         
         if predict != label:
             out_wrong = join(out_dir, str(label), str(predict))
@@ -96,7 +103,7 @@ def evaluate(weight, file_dir, csv_file, out_dir):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--ckpt')
+    parser.add_argument('--config')
     parser.add_argument('--csv-file', type=str, \
         default='./dataset/dataset_8/public_test_review/public_test.csv', \
         help='path to image file')
@@ -109,5 +116,5 @@ if __name__=='__main__':
     args = parser.parse_args()
     start_time = time.time()
     
-    evaluate(args.ckpt, args.data_dir, args.csv_file, args.out_dir)
+    evaluate(args.config, args.data_dir, args.csv_file, args.out_dir)
     print(time.time()-start_time)

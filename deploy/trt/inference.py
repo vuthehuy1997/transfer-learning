@@ -2,11 +2,12 @@ from PIL import Image
 import time
 import numpy as np
 import cv2
-from trt_loader import TrtCNN
+import json
+from model.network.cnn import CNNModel
+from deploy.trt.trt_loader import TrtCNN
 from albumentations import (Compose,Resize,)
 from albumentations.augmentations.transforms import Normalize
 from albumentations.pytorch.transforms import ToTensor
-from torchvision import models
 import torch
 import time
 
@@ -23,15 +24,22 @@ def preprocess_image(img_path):
     # do transformations
     input_data = transforms(image=input_img)["image"]
     # prepare batch
-    batch_data = torch.unsqueeze(input_data, 0)
-
+    # batch_data = torch.unsqueeze(input_data, 0)
+    batch_data = torch.stack([input_data,input_data])
     return batch_data
 
 
 def postprocess(output_data):
+    x =  output_data.cpu().detach().numpy()
+    # print(x)
+    print(x.shape)
     # get class names
-    with open("imagenet_classes.txt") as f:
-        classes = [line.strip() for line in f.readlines()]
+    classes = []
+    f = open('data/labels.json',)
+    labels = json.load(f)
+    # print('label: ', labels)
+    for label in labels:
+        classes.append(labels[label])
     # calculate human-readable value by softmax
     confidences = torch.nn.functional.softmax(output_data, dim=1)[0] * 100
     # find top predicted classes
@@ -42,18 +50,18 @@ def postprocess(output_data):
     # indices = np.asarray(indices)
     # print('indices: ', indices)
 
-    while confidences[indices[0][i]] > 20:
-        print(confidences[indices[0][i]])
-        class_idx = indices[0][i]
-        print(
-            "class:",
-            classes[class_idx],
-            ", confidence:",
-            confidences[class_idx].item(),
-            "%, index:",
-            class_idx.item(),
-        )
-        i += 1
+    # while confidences[indices[0][i]] > 50:
+    #     print(confidences[indices[0][i]])
+    #     class_idx = indices[0][i]
+    #     print(
+    #         "class:",
+    #         classes[class_idx],
+    #         ", confidence:",
+    #         confidences[class_idx].item(),
+    #         "%, index:",
+    #         class_idx.item(),
+    #     )
+    #     i += 1
 
 class Trt(object):
     def __init__(self, model):
@@ -77,15 +85,26 @@ class Trt(object):
 if __name__ == '__main__':
 
     # load pre-trained model -------------------------------------------------------------------------------------------
-    
-    pytorch_model = models.resnet50(pretrained=True)
-    # inference stage --------------------------------------------------------------------------------------------------
-    pytorch_model.eval()
-    pytorch_model.cuda()
+    ckpt = torch.load('weights/last.pt')
+    config = ckpt['config']
+    config['device'] = 'cuda:0'
 
-    # trt_model = Trt('resnet50.trt')
+    # Network
+    pytorch_model = CNNModel(
+        fe_name=config['model']['cnn']['module'], version=config['model']['cnn']['version'],
+        feature_extract=config['model']['cnn']['feature_extract'], pretrained=config['model']['cnn']['pretrained'],
+        number_class=config['data']['num_classes'], drop_p=config['regularization']['dropout']).to(config['device'])
+
+    pytorch_model.load_state_dict(ckpt['model'])
+    print('Finished loading model!')
+    # print(pytorch_model)
     
-    filenames = ["dog.jpg", "turkish_coffee.jpg"]
+    pytorch_model = pytorch_model.to(config['device'])
+    pytorch_model.eval()
+
+    trt_model = Trt('weights/last.trt')
+    
+    filenames = ["dataset/dataset_8/public_test_review/images/brc_test_001_0_225.jpg", "dataset/dataset_8/public_test_review/images/brc_test_002_0_270.jpg"]
     i = 0
     total = 0
     while i < 10:
@@ -99,13 +118,14 @@ if __name__ == '__main__':
         print('pytorch: ',time_)
         postprocess(output)
     # Trt
-        # img = preprocess_image(filenames[i%2]).numpy()
-        # s = time.time()
-        # output = trt_model.predict(img)
-        # time_ = time.time() - s
-        # total += time_
-        # print('tensorrt: ',time_)
-        # output = torch.Tensor(output)
-        # postprocess(output)
+        img = preprocess_image(filenames[i%2]).numpy()
+        print(img.shape)
+        s = time.time()
+        output = trt_model.predict(img)
+        time_ = time.time() - s
+        total += time_
+        print('tensorrt: ',time_)
+        output = torch.Tensor(output)
+        postprocess(output)
 
     print('total: ',total)
