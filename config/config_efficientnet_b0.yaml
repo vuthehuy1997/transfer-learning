@@ -1,6 +1,6 @@
 base: 'config/base.yaml'
 data: 'config/data/data.yaml'
-model: 'config/model/resnet50.yaml'
+model: 'config/model/efficientnet_b0.yaml'
 loss: 'config/loss/ce.yaml'
 optimizer: 'config/optimizer/adam.yaml'
 

@@ -1,0 +1,11 @@
+model:
+  model_name: 'efficientnet_b0'
+  cnn:
+    name: efficientnet_b0
+    module: EfficientNet
+    version: efficientnet_b0
+    pretrained: True
+    feature_extract: False
+  dataset:
+    max_height: 224
+    max_width: 224

@@ -110,14 +110,14 @@ class Mobilenet(CNNFE):
 
 class EfficientNet(CNNFE):
     version = {
-        # 'efficientnet_b0':torchvision.models.efficientnet_b0,
-        # 'efficientnet_b1': torchvision.models.efficientnet_b1,
-        # 'efficientnet_b2': torchvision.models.efficientnet_b2,
-        # 'efficientnet_b3': torchvision.models.efficientnet_b3,
-        # 'efficientnet_b4': torchvision.models.efficientnet_b4,
-        # 'efficientnet_b5': torchvision.models.efficientnet_b5,
-        # 'efficientnet_b6': torchvision.models.efficientnet_b6,
-        # 'efficientnet_b7': torchvision.models.efficientnet_b7,
+        'efficientnet_b0':torchvision.models.efficientnet_b0,
+        'efficientnet_b1': torchvision.models.efficientnet_b1,
+        'efficientnet_b2': torchvision.models.efficientnet_b2,
+        'efficientnet_b3': torchvision.models.efficientnet_b3,
+        'efficientnet_b4': torchvision.models.efficientnet_b4,
+        'efficientnet_b5': torchvision.models.efficientnet_b5,
+        'efficientnet_b6': torchvision.models.efficientnet_b6,
+        'efficientnet_b7': torchvision.models.efficientnet_b7,
 
         # 'efficientnet_v2_s': torchvision.models.efficientnet_v2_s,
         # 'efficientnet_v2_m': torchvision.models.efficientnet_v2_m,
@@ -130,7 +130,7 @@ class EfficientNet(CNNFE):
         if feature_extract:
             for param in self.backbone.parameters():
                 param.requires_grad = False
-        self.n_features = net.lastconv_output_channels
+        self.n_features = net.classifier[1].in_features
     def get_backbone(self):
         return self.backbone
     def get_n_features(self):

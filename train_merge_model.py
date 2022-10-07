@@ -16,6 +16,7 @@ from PIL import Image, ImageFilter
 from utils import set_seed, set_determinism, count_parameters
 from trainer import Trainer
 from model.network.cnn import CNNModel
+from model.network.cnn_merge_model import CNNMergeModel
 
 from config.config import get_config
 from model.loss.loss import get_loss_from_config
@@ -25,8 +26,10 @@ from data.augment import get_img_transform
 
 
 def train(args):
-    config = get_config(args.config)
+    config = get_config(args.config1)
     print(config)
+    config2 = get_config(args.config2)
+    print(config2)
 
     if config['classification']:
         from data.dataset import TFDataset
@@ -81,11 +84,23 @@ def train(args):
         yaml.dump(config, outfile, default_flow_style=False)
 
     # Network
-    model = CNNModel(
+    model1 = CNNModel(
         fe_name=config['model']['cnn']['module'], version=config['model']['cnn']['version'],
         feature_extract=config['model']['cnn']['feature_extract'], pretrained=config['model']['cnn']['pretrained'],
         number_class=config['data']['num_classes'], drop_p=config['regularization']['dropout']).to(device)
-    count_parameters(model)
+    ckpt = torch.load(args.resume1, map_location=device)
+    model1.load_state_dict(ckpt['model'])
+
+    model2 = CNNModel(
+        fe_name=config2['model']['cnn']['module'], version=config2['model']['cnn']['version'],
+        feature_extract=config2['model']['cnn']['feature_extract'], pretrained=config2['model']['cnn']['pretrained'],
+        number_class=config2['data']['num_classes'], drop_p=config2['regularization']['dropout']).to(device)
+    ckpt = torch.load(args.resume2, map_location=device)
+    model2.load_state_dict(ckpt['model'])
+
+    model = CNNMergeModel(
+        model1, model2,
+        number_class=config['data']['num_classes'], drop_p=config['regularization']['dropout']).to(device)
 
     # Loss
     set_seed(config['train']['seed'])
@@ -123,7 +138,10 @@ def train(args):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str)
+    parser.add_argument('--config1', type=str)
+    parser.add_argument('--resume1', type=str, help='path of pretrained')
+    parser.add_argument('--config2', type=str)
+    parser.add_argument('--resume2', type=str, help='path of pretrained')
     parser.add_argument('--resume', type=str, help='path of pretrained')
     parser.add_argument('--ckpt_dir', type=str, default='', help='path of pretrained')
     args = parser.parse_args()

@@ -85,7 +85,7 @@ class Trt(object):
 if __name__ == '__main__':
 
     # load pre-trained model -------------------------------------------------------------------------------------------
-    ckpt = torch.load('weights/last.pt')
+    ckpt = torch.load('weights/resnet50.pt')
     config = ckpt['config']
     config['device'] = 'cuda:0'
 
@@ -102,11 +102,12 @@ if __name__ == '__main__':
     pytorch_model = pytorch_model.to(config['device'])
     pytorch_model.eval()
 
-    trt_model = Trt('weights/last.trt')
+    trt_model = Trt('weights/resnet50.trt')
     
     filenames = ["dataset/dataset_8/public_test_review/images/brc_test_001_0_225.jpg", "dataset/dataset_8/public_test_review/images/brc_test_002_0_270.jpg"]
     i = 0
-    total = 0
+    total_pytorch = 0
+    total_trt = 0
     while i < 10:
         i+=1
     # pytorch
@@ -114,7 +115,7 @@ if __name__ == '__main__':
         s = time.time()
         output = pytorch_model(input)
         time_ = time.time() - s
-        total += time_
+        total_pytorch += time_
         print('pytorch: ',time_)
         postprocess(output)
     # Trt
@@ -123,9 +124,10 @@ if __name__ == '__main__':
         s = time.time()
         output = trt_model.predict(img)
         time_ = time.time() - s
-        total += time_
+        total_trt += time_
         print('tensorrt: ',time_)
         output = torch.Tensor(output)
         postprocess(output)
 
-    print('total: ',total)
+    print('total_pytorch: ',total_pytorch)
+    print('total_trt: ',total_trt)
