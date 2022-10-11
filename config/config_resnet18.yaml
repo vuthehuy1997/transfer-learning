@@ -1,9 +1,9 @@
 base: 'config/base.yaml'
 data: 'config/data/data.yaml'
-model: 'config/model/resnet50.yaml'
+model: 'config/model/resnet18.yaml'
 loss: 'config/loss/ce.yaml'
 optimizer: 'config/optimizer/adam.yaml'
 
 classification: True
 aug: True
-device: cuda:1
+device: cuda:0

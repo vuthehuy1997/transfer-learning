@@ -1,11 +1,11 @@
 data:
-  num_classes: 8
+  num_classes: 4
   augmentation: False
-  train_dir: './dataset/dataset_8/train_val/images'
+  train_dir: './dataset/trc_v2_angle_1object'
   train_label: 'train.csv'
-  val_dir: './dataset/dataset_8/train_val/images'
-  val_label: 'val.csv'
-  test_dir: './dataset/dataset_8/public_test_review/'
-  test_label: 'public_test.csv'
-  label_name: 'data/labels.json'
+  val_dir: './dataset/trc_v2_angle_1object'
+  val_label: 'test.csv'
+  test_dir: './dataset/trc_v2_angle_1object'
+  test_label: 'test.csv'
+  label_name: 'data/labels_4.json'
   subset: False

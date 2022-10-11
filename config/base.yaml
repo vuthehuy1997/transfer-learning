@@ -4,7 +4,7 @@ dataloader:
 train:
   seed: 0
   clip: 1
-  n_epochs: 1
+  n_epochs: 100
   root_ckpt_dir: './checkpoint'
   ckpt_dir: './checkpoint'
 regularization:
